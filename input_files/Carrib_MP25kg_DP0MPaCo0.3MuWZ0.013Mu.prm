@@ -1,0 +1,207 @@
+set Dimension                              = 2
+set Use years in output instead of seconds = true
+set End time                               = 75e6
+set Output directory                       = outputs/NewerCarrib9_v1e20L15_Disl5.0e-15_7.5kmCrustCut150km_MP25kg_DP0MPaCo0.3MuWZ0.013Mu_0GaBaseBC_StrongLith_TaperedForearc
+set Resume computation                     = auto
+
+### SOLVER STUFF
+# non-linear stuff
+set Nonlinear solver scheme                = single Advection, iterated Stokes
+set Nonlinear solver tolerance             = 5.0e-4
+set Max nonlinear iterations               = 1000
+set CFL number                             = 0.5
+
+# linear solver stuff 
+subsection Solver parameters
+  subsection Stokes solver parameters
+    set Linear solver tolerance  		= 5.0e-5
+    set Number of cheap Stokes solver steps     = 400
+  end
+  set Temperature solver tolerance        = 1e-10
+  set Composition solver tolerance        = 1e-10
+end
+subsection Discretization
+  set Temperature polynomial degree       = 2
+  set Composition polynomial degree       = 2
+end
+
+subsection Geometry model
+  set Model name = box
+  subsection Box
+    set X repetitions = 4
+    set X extent = 11600e3
+    set Y extent =  2900e3
+  end
+end
+
+subsection Mesh refinement
+  set Initial global refinement                = 7
+  set Initial adaptive refinement              = 3
+  set Time steps between mesh refinement       = 5
+  set Refinement fraction                      = 0.225
+  set Coarsening fraction                      = 0.375
+  set Strategy                                 = composition threshold, temperature, minimum refinement function, strain rate
+  set Refinement criteria scaling factors      = 1, 1.5, 1, 1
+  set Refinement criteria merge operation      = max
+  set Run postprocessors on initial refinement = false 
+
+  subsection Composition threshold
+    set Compositional field thresholds         = 0.01, 2, 0.01, 0.01
+  end
+
+  subsection Minimum refinement function
+    set Coordinate system = cartesian
+    set Variable names = x,y
+    set Function constants = ymax=2900.0e3, lith=150.0e3
+    set Function expression = (((ymax-y) < lith) ? 8: \
+                               ((ymax-y)>(610.e3) && (ymax-y)<(710.e3)) ? 7: \
+                               0)
+  end
+
+end
+#-------------------------------------
+
+#---- initial temp and comp fields ---
+subsection Initial temperature model
+  set Model name = ascii data
+   
+   subsection Ascii data model
+     set Data directory = /work/04714/adamholt/stampede2/aspect_work/text_file_inputs/PlumeSubd/new/
+     set Data file name = tempSPandOP_halfspace60Ma100Ma_SP4000kmMP2000kmOP2000km_rad200km_PlumeSubd_NoBaseBL_TaperedForearc.txt 
+   end
+end
+
+subsection Compositional fields
+   set Number of fields = 4
+   set Names of fields   = crust, mp, wz, mp_crust
+end
+
+subsection Initial composition model
+  set Model name = ascii data
+  
+   subsection Ascii data model
+     set Data directory = /work/04714/adamholt/stampede2/aspect_work/text_file_inputs/PlumeSubd/new/
+     set Data file name = compnotch_thick7.5km_SP4000kmMP2000kmOP2000km_BothPlatesCrustAndMP_DistinctCrustMPTapered.txt 
+   end
+end
+
+#-------------------------------------
+
+#------- boundary conditions -------------
+subsection Boundary temperature model
+  set Fixed temperature boundary indicators = top, bottom
+  set List of model names = box
+
+  subsection Box
+    set Bottom temperature = 1573
+    set Top temperature = 273
+  end
+end
+
+subsection Boundary velocity model
+  set Tangential velocity boundary indicators = left, right, bottom, top
+end
+#-------------------------------------
+
+#-------- material model -------------
+subsection Material model
+  set Model name = visco plastic 
+
+  subsection Visco Plastic
+
+    set Viscous flow law            = composite
+    set Viscosity averaging scheme  = geometric
+
+    # reference stuff
+    set Reference temperature = 1573
+    set Minimum strain rate   = 1.e-20
+    set Adiabat temperature gradient for viscosity = 10.08e-09    # 0.35 K/Pa
+
+    # density-related parameters (crust has mantle density = 3300 at T = 273 K) 
+    set Thermal diffusivities =   1.e-6
+    set Heat capacities       =   750.
+    set Thermal expansivities =   3.5e-5
+
+    # Set up phase transitions so that crust becomes background material past 100 km, and
+    # dislocation becomes inactive in the lower mantle for all fields.
+    set Phase transition depths           =   background: 660e3,   crust: 150e3|660e3, mp: 660e3, wz: 150e3|660e3,  mp_crust: 150e3|660e3 
+    set Phase transition widths           =   background: 1e3,     crust: 1e3|1e3,     mp: 1e3,   wz: 1e3|1e3,      mp_crust: 1e3|1e3
+    set Phase transition temperatures     =   background: 1573,    crust: 1573|1573,   mp: 1573,  wz: 1573|1573,    mp_crust: 1573|1573
+    set Phase transition Clapeyron slopes =   background: 0,       crust: 0|0,         mp: 0,     wz: 0|0,          mp_crust: 0|0
+
+    set Densities   =   background: 3300|3300,   crust: 3100|3300|3300,	 mp: 3275|3300,  wz: 3300|3300|3300, mp_crust: 3100|3300|3300
+    
+    # viscosity-related parameters (mantle, crust)
+    set Viscous flow law = composite 
+    # at ref conditions (1e-15s-1,330km,1573K + adiabatic): 
+    # ... visc diff = visc disl = 5e20. thus, composition visc = 2.5e20
+
+    # dislocation creep (not active in lm)
+    set Prefactors for dislocation creep            = background:  2.076e-16|1.e-40,     crust: 2.076e-16|2.076e-16|1.e-40,    mp: 2.076e-16|1.e-40, wz: 2.076e-16|2.076e-16|1.e-40,   mp_crust: 2.076e-16|2.076e-16|1.e-40
+    set Stress exponents for dislocation creep      = 3.5
+    set Activation energies for dislocation creep   = 540.e3
+    set Activation volumes for dislocation creep    = 12e-6
+
+    # diffusion creep (lm/um viscosity >= 20)
+    set Prefactors for diffusion creep              =  background: 1.002e-10|7.885e-13, crust: 1.002e-10|1.002e-10|7.885e-13,  mp: 1.002e-10|7.885e-13,  wz: 1.002e-10|1.002e-10|7.885e-13, mp_crust: 1.002e-10|1.002e-10|7.885e-13
+    set Stress exponents for diffusion creep        =  1 
+    set Grain size exponents for diffusion creep    =  0
+    set Activation energies for diffusion creep     =  300e3
+    set Activation volumes for diffusion creep      =  background: 4e-6|2.5e-6,         crust: 4e-6|4e-6|2.5e-6,	       mp: 4e-6|2.5e-6,           wz: 4e-6|4e-6|2.5e-6,  mp_crust: 4e-6|4e-6|2.5e-6
+
+    # "plasticity"
+    set Yield mechanism                             =  drucker 
+    set Cohesions                                   =  background: 0|0,            crust: 1.e10|1.e10|1.e10,    mp: 0|0,  wz: 0|0|0,  mp_crust: 1.e10|1.e10|1.e10
+    set Angles of internal friction                 =  background: 17.458|17.458,  crust: 0|0|0,                mp: 17.458|17.458,  wz: 0.75|0.75|17.458, mp_crust: 0|0|0
+ 
+    set Maximum yield stress                        =  0.5e9 
+
+    set Minimum viscosity                           =  background: 5e18|5e18,  crust: 0.999e20|5e18|5e18,   mp: 5e18|5e18,    wz: 5e18|5e18|5e18,   mp_crust: 0.999e20|5e18|5e18
+    set Maximum viscosity                           =  background: 1e23|2e24,  crust: 1.001e20|1e23|2e24,   mp: 1e23|2e24,    wz: 1e23|1e23|2e24,   mp_crust: 1.001e20|1e23|2e24
+
+  end
+
+end
+#-------------------------------------
+
+# --------- other stuff -------------
+set Pressure normalization            = surface
+set Surface pressure                  = 0
+set Adiabatic surface temperature     = 1573
+
+subsection Gravity model
+  set Model name = vertical
+
+  subsection Vertical
+    set Magnitude = 9.81
+  end
+end
+
+subsection Formulation
+  set Formulation = Boussinesq approximation
+end
+#-------------------------------------
+
+#--------- postprocessing ------------
+subsection Postprocess
+  set List of postprocessors = visualization
+
+  subsection Visualization
+    set List of output variables = viscosity, strain rate, dynamic topography, shear stress, stress, density
+    set Output format                 = vtu
+    set Time steps between graphical output = 50
+    set Interpolate output = true
+    set Point-wise stress and strain = true
+
+  end
+end
+#-------------------------------------
+
+#--------- checkpointing -------------
+subsection Checkpointing
+  set Steps between checkpoint = 100
+end
+#-------------------------------------
+
+
+
