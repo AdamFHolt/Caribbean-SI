@@ -6,7 +6,7 @@ This repository contains the thermo-mechanical subduction models presented in Co
 
 **input_geometries:** Contains Python scripts used to create the initial conditions of the models as .txt files. 
 
-**ASPECT references:**
+## ASPECT references:
 
 Martin Kronbichler, Timo Heister, and Wolfgang Bangerth. 2012. “High Accuracy Mantle Convection Simulation through Modern Numerical Methods.” Geophysical Journal International 191 (1) (August 21): 12–29. doi:10.1111/j.1365-246x.2012.05609.x. http://dx.doi.org/10.1111/j.1365-246X.2012.05609.x.
 
