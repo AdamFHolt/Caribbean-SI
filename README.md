@@ -1,6 +1,6 @@
 ## OVERVIEW
 
-This repository contains the thermo-mechanical subduction models presented in Conrad et al. (in prep for EPSL). All models were ran using ASPECT version 2.4.0. 
+This repository contains the thermo-mechanical subduction models presented in Conrad et al. (in review at G-Cubed). All models were ran using ASPECT version 2.4.0. 
 
 **input_files:**  Contains all ASPECT input (.prm) files used in the study.
 
