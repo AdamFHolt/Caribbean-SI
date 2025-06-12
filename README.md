@@ -1,10 +1,14 @@
 ## OVERVIEW
 
-This repository contains the thermo-mechanical subduction models presented in Conrad et al. (in review at G-Cubed). All models were ran using ASPECT version 2.4.0. 
+This repository contains the thermo-mechanical subduction models presented in Conrad et al. (2024). All models were ran using ASPECT version 2.4.0. 
 
 **input_files:**  Contains all ASPECT input (.prm) files used in the study.
 
 **input_geometries:** Contains Python scripts used to create the initial conditions of the models as .txt files. 
+
+## Main study reference:
+
+Conrad, E. M., Faccenna, C., Holt, A. F., and Becker, T. W., 2024. Tectonic reorganization of the Caribbean plate system in the Paleogene driven by Farallon slab anchoring. Geochem., Geophys., Geosys., doi:10.1029/2024GC011499
 
 ## ASPECT references:
 
